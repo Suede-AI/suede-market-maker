@@ -2,8 +2,8 @@ import Foundation
 
 let bundleURL = Bundle.main.bundleURL
 let bundledRootURL = bundleURL.deletingLastPathComponent()
-let knownRootURL = URL(fileURLWithPath: "/Users/jason/Suede Assets/06 Code Scripts and Tools/Apps and Codebases/Suede-AI-App/tools/volume-bot")
-let rootURL = [bundledRootURL, knownRootURL].first {
+let currentDirectoryURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+let rootURL = [bundledRootURL, currentDirectoryURL].first {
   FileManager.default.fileExists(atPath: $0.appendingPathComponent("scripts/open-dashboard.js").path)
 } ?? bundledRootURL
 let logURL = rootURL.appendingPathComponent("dashboard.log")
