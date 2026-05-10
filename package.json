@@ -1,0 +1,47 @@
+{
+  "name": "suede-volume-bot",
+  "version": "1.0.0",
+  "description": "Suede-branded self-hosted Solana market maker dashboard with Telegram controls, wallet rotation, and gas-fee transparency",
+  "homepage": "https://suedeai.ai",
+  "keywords": [
+    "suede-ai",
+    "suede-labs",
+    "solana",
+    "market-maker",
+    "trading-dashboard",
+    "telegram-bot",
+    "gas-fees",
+    "wallet-rotation",
+    "jupiter",
+    "typescript",
+    "self-hosted",
+    "crypto-tools"
+  ],
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "tsc --noEmit && ts-node src/fundingMath.test.ts && ts-node src/telegramCommands.test.ts && ts-node src/rotation.test.ts",
+    "app": "node scripts/open-dashboard.js",
+    "website": "node scripts/open-dashboard.js",
+    "dashboard:open": "node scripts/open-dashboard.js",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "dashboard": "node dist/dashboard.js",
+    "funding:status": "node dist/funding.js status",
+    "funding:distribute": "node dist/funding.js distribute",
+    "funding:sweep": "node dist/funding.js sweep",
+    "telegram": "node dist/telegram.js",
+    "telegram:setup": "node scripts/setup-telegram-commands.js"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.98.0",
+    "axios": "^1.7.2",
+    "bs58": "^5.0.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}

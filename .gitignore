@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+wallets.json
+dashboard-config.json
+funding-wallet.json
+*.log
+*.err.log
+*.jsonl
+.DS_Store
+exports/
+*.zip
