@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import {
+  type AccountInfo,
   Connection,
   Keypair,
   PublicKey,
@@ -85,6 +86,37 @@ function managedWallets(): Keypair[] {
   return enabled.map((wallet, index) => walletFromPrivateKey(wallet.privateKey, index));
 }
 
+export function assertPlainSolSourceAccount(
+  publicKey: PublicKey,
+  accountInfo: AccountInfo<Buffer> | null,
+  label: string
+) {
+  if (!accountInfo) return;
+
+  if (!accountInfo.owner.equals(SystemProgram.programId)) {
+    throw new Error(
+      `${label} ${publicKey.toString()} is owned by ${accountInfo.owner.toString()}, ` +
+      "not the system program. Use a normal SOL wallet as the transfer source."
+    );
+  }
+
+  if (accountInfo.data.length > 0) {
+    throw new Error(
+      `${label} ${publicKey.toString()} carries ${accountInfo.data.length} bytes of account data. ` +
+      "Normal SOL transfers require the source to be a plain wallet account with no data. " +
+      "Create or select a normal funding wallet and fund that address instead."
+    );
+  }
+}
+
+async function assertPlainSolSource(
+  connection: Connection,
+  publicKey: PublicKey,
+  label: string
+) {
+  assertPlainSolSourceAccount(publicKey, await connection.getAccountInfo(publicKey), label);
+}
+
 export function resolveFundingWallet(): Keypair {
   const envPrivateKey = process.env.FUNDING_WALLET_PRIVATE_KEY?.trim();
   if (envPrivateKey) return walletFromPrivateKey(envPrivateKey, 0);
@@ -127,6 +159,7 @@ async function sendSol(
   to: PublicKey,
   lamports: number
 ): Promise<string> {
+  await assertPlainSolSource(connection, from.publicKey, "Transfer source");
   const transaction = new Transaction().add(
     SystemProgram.transfer({
       fromPubkey: from.publicKey,
@@ -161,6 +194,7 @@ export async function getFundingSpendableStatus(
   connection: Connection
 ): Promise<FundingSpendableStatus> {
   const source = resolveFundingWallet();
+  await assertPlainSolSource(connection, source.publicKey, "Funding wallet");
   const reserveSol = numEnv("FUNDING_SOURCE_RESERVE_SOL", 0.01);
   const sourceBalanceLamports = await connection.getBalance(source.publicKey);
   const sourceSpendableLamports =
@@ -182,6 +216,7 @@ export async function ensureWalletTopUp(
   targetSolOverride?: number
 ): Promise<TopUpResult> {
   const source = resolveFundingWallet();
+  await assertPlainSolSource(connection, source.publicKey, "Funding wallet");
   const targetSol = targetSolOverride ?? config.autoTopUpTargetSol;
   const transferSol = Math.max(0, targetSol - currentSol);
   const transferLamports = solToLamports(transferSol);
@@ -242,6 +277,7 @@ export async function sweepWalletBackToFunding(
   dryRun = false
 ): Promise<SweepBackResult> {
   const source = resolveFundingWallet();
+  await assertPlainSolSource(connection, wallet.publicKey, "Sweep wallet");
   const balanceLamports = await connection.getBalance(wallet.publicKey);
   const reserveLamports = solToLamports(config.autoSweepReserveSol);
   const sweepLamports = Math.floor(balanceLamports - reserveLamports - DEFAULT_FEE_LAMPORTS);

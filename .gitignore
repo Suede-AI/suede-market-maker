@@ -4,6 +4,7 @@ dist/
 wallets.json
 dashboard-config.json
 funding-wallet.json
+funding-wallet.*.json
 *.log
 *.err.log
 *.jsonl

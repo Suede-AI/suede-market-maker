@@ -1,4 +1,6 @@
 import assert from "assert";
+import { PublicKey, SystemProgram } from "@solana/web3.js";
+import { assertPlainSolSourceAccount } from "./funding";
 import {
   planEvenDistribution,
   planSweepTransfers,
@@ -46,8 +48,45 @@ function testSweepSkipsWalletsWithoutSpendableBalance() {
   assert.strictEqual(plan.estimatedFeeLamports, 5_000);
 }
 
+function testFundingSourceRejectsDataAccount() {
+  const publicKey = new PublicKey("11111111111111111111111111111111");
+  assert.throws(
+    () =>
+      assertPlainSolSourceAccount(
+        publicKey,
+        {
+          data: Buffer.alloc(80),
+          executable: false,
+          lamports: 1,
+          owner: SystemProgram.programId,
+          rentEpoch: 0,
+        },
+        "Funding wallet"
+      ),
+    /plain wallet account with no data/
+  );
+}
+
+function testFundingSourceAllowsPlainWalletAccount() {
+  assert.doesNotThrow(() =>
+    assertPlainSolSourceAccount(
+      new PublicKey("11111111111111111111111111111111"),
+      {
+        data: Buffer.alloc(0),
+        executable: false,
+        lamports: 1,
+        owner: SystemProgram.programId,
+        rentEpoch: 0,
+      },
+      "Funding wallet"
+    )
+  );
+}
+
 testEvenDistributionKeepsSourceReserveAndFees();
 testEvenDistributionRejectsEmptyRecipientList();
 testSweepSkipsWalletsWithoutSpendableBalance();
+testFundingSourceRejectsDataAccount();
+testFundingSourceAllowsPlainWalletAccount();
 
 console.log("funding math tests passed");
