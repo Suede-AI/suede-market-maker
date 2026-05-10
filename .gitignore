@@ -10,3 +10,6 @@ funding-wallet.json
 .DS_Store
 exports/
 *.zip
+
+# Local macOS app bundle
+Suede Market Maker.app/
