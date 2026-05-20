@@ -214,7 +214,7 @@ You can also find Suede at [suedeai.org](https://suedeai.org).
 
 Suede Labs AI is building creator-first infrastructure around ownership, provenance, AI tooling, programmable value, and transparent builder tools.
 
-Suede AI is creator ownership infrastructure for the AI media era: proof of creation, rights metadata, programmable IP, royalty routing, agent-accessible commerce, and practical tools for builders who want to own more of their stack.
+Suede Labs AI is creator ownership infrastructure for the AI media era: proof of creation, rights metadata, programmable IP, royalty routing, agent-accessible commerce, and practical tools for builders who want to own more of their stack.
 
 This market maker is one small piece of that broader Suede stack: practical tools, real transparency, stronger infrastructure, and fewer black boxes.
 
