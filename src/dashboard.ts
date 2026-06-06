@@ -1877,7 +1877,12 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === "GET" && url.pathname === "/api/wallets/balances") {
-      json(res, await readWalletBalances());
+      const balances = await readWalletBalances();
+      const safeWallets = balances.wallets.map((row) => {
+        const { privateKey: _privateKey, ...safe } = row as Record<string, unknown>;
+        return safe;
+      });
+      json(res, { ...balances, wallets: safeWallets });
       return;
     }
 
