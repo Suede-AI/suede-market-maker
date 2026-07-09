@@ -1,6 +1,7 @@
 import http from "http";
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import { spawn, type ChildProcessWithoutNullStreams } from "child_process";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
@@ -8,6 +9,7 @@ import { distributeFunding, getFundingStatus, sweepFunding } from "./funding";
 import { SUEDE_LOGO_PATH, SUEDE_TOKEN_DECIMALS, SUEDE_TOKEN_MINT } from "./suede";
 
 const PORT = Number(process.env.DASHBOARD_PORT || 8787);
+const DASHBOARD_TOKEN = crypto.randomBytes(24).toString("hex");
 const ROOT = path.resolve(__dirname, "..");
 const ENV_PATH = path.join(ROOT, ".env");
 const DASHBOARD_CONFIG_PATH = path.join(ROOT, "dashboard-config.json");
@@ -423,6 +425,14 @@ function json(res: http.ServerResponse, value: unknown, status = 200) {
     "cache-control": "no-store",
   });
   res.end(JSON.stringify(value));
+}
+
+function requireBotStopped(res: http.ServerResponse, action: string): boolean {
+  if (bot && !botExited) {
+    json(res, { error: `Stop the bot before ${action}` }, 409);
+    return true;
+  }
+  return false;
 }
 
 function readBody(req: http.IncomingMessage): Promise<Record<string, unknown>> {
@@ -1378,6 +1388,7 @@ const html = String.raw`<!doctype html>
     </div>
   </footer>
   <script>
+    const DASHBOARD_TOKEN = "${DASHBOARD_TOKEN}";
     const keys = [
       "MODE", "DRY_RUN", "USE_VALUATION_QUOTES", "CYCLES", "PULSE_TRADE_PCT", "TRADE_AMOUNT_SOL_MIN",
       "TRADE_AMOUNT_SOL_MAX", "DELAY_MIN_SEC", "DELAY_MAX_SEC",
@@ -1431,7 +1442,9 @@ const html = String.raw`<!doctype html>
     }
 
     async function api(path, options) {
-      const res = await fetch(path, options);
+      const opts = options || {};
+      const headers = Object.assign({ "x-dashboard-token": DASHBOARD_TOKEN }, opts.headers || {});
+      const res = await fetch(path, Object.assign({}, opts, { headers }));
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || res.statusText);
       return data;
@@ -1799,6 +1812,11 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (req.method === "POST" && req.headers["x-dashboard-token"] !== DASHBOARD_TOKEN) {
+      json(res, { error: "Missing or invalid dashboard token" }, 401);
+      return;
+    }
+
     if (req.method === "GET" && url.pathname === "/suede-logo.png") {
       res.writeHead(200, {
         "content-type": "image/png",
@@ -1824,10 +1842,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === "POST" && url.pathname === "/api/wallets/add") {
-      if (bot && !botExited) {
-        json(res, { error: "Stop the bot before adding wallets" }, 409);
-        return;
-      }
+      if (requireBotStopped(res, "adding wallets")) return;
       const body = await readBody(req);
       const count = Number(body.count || 1);
       json(res, { created: addWallets(count), wallets: readWallets() });
@@ -1835,10 +1850,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === "POST" && url.pathname === "/api/wallets/enabled") {
-      if (bot && !botExited) {
-        json(res, { error: "Stop the bot before changing wallets" }, 409);
-        return;
-      }
+      if (requireBotStopped(res, "changing wallets")) return;
       const body = await readBody(req);
       json(res, {
         wallets: setWalletEnabled(Number(body.index), body.enabled === true || body.enabled === "true"),
@@ -1847,10 +1859,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === "POST" && url.pathname === "/api/wallets/enabled-all") {
-      if (bot && !botExited) {
-        json(res, { error: "Stop the bot before changing wallets" }, 409);
-        return;
-      }
+      if (requireBotStopped(res, "changing wallets")) return;
       const body = await readBody(req);
       json(res, {
         wallets: setAllWalletsEnabled(body.enabled === true || body.enabled === "true"),
@@ -1859,19 +1868,13 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === "POST" && url.pathname === "/api/wallets/enable-funded") {
-      if (bot && !botExited) {
-        json(res, { error: "Stop the bot before changing wallets" }, 409);
-        return;
-      }
+      if (requireBotStopped(res, "changing wallets")) return;
       json(res, await enableFundedWallets());
       return;
     }
 
     if (req.method === "POST" && url.pathname === "/api/wallets/remove-disabled") {
-      if (bot && !botExited) {
-        json(res, { error: "Stop the bot before removing wallets" }, 409);
-        return;
-      }
+      if (requireBotStopped(res, "removing wallets")) return;
       json(res, removeDisabledWallets());
       return;
     }
@@ -1892,10 +1895,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === "POST" && url.pathname === "/api/funding/distribute") {
-      if (bot && !botExited) {
-        json(res, { error: "Stop the bot before distributing SOL" }, 409);
-        return;
-      }
+      if (requireBotStopped(res, "distributing SOL")) return;
       const body = await readBody(req);
       const result = await distributeFunding(body.dryRun === true || body.dryRun === "true");
       summarizeFunding("distribute", result);
@@ -1904,10 +1904,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === "POST" && url.pathname === "/api/funding/sweep") {
-      if (bot && !botExited) {
-        json(res, { error: "Stop the bot before sweeping SOL" }, 409);
-        return;
-      }
+      if (requireBotStopped(res, "sweeping SOL")) return;
       const body = await readBody(req);
       const result = await sweepFunding(body.dryRun === true || body.dryRun === "true");
       summarizeFunding("sweep", result);
@@ -1957,6 +1954,7 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, "127.0.0.1", () => {
   appendLog(`[dashboard] listening on http://localhost:${PORT}`);
   console.log(`Dashboard listening on http://localhost:${PORT}`);
+  console.log(`Dashboard token: ${DASHBOARD_TOKEN}`);
 });
 
 process.on("SIGINT", () => {

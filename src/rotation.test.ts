@@ -40,6 +40,22 @@ assert.strictEqual(
     completed,
     lastUsedAt,
   }),
+  1
+);
+
+assert.strictEqual(
+  nextCooldownWaitMs(wallets, {
+    nowMs: 10_000,
+    cooldownMs: 5_000,
+    maxCyclesPerWallet: 2,
+    activeMakerCount: 1,
+    completed: new Map([
+      ["maker-1", 2],
+      ["maker-2", 2],
+      ["maker-3", 2],
+    ]),
+    lastUsedAt,
+  }),
   0
 );
 
