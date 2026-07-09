@@ -62,7 +62,7 @@ export function nextCooldownWaitMs<T extends RotationWallet>(
       return Math.max(0, options.cooldownMs - (options.nowMs - lastUsedAt));
     });
 
-  return waits.length ? Math.min(...waits) : 0;
+  return waits.length ? Math.max(Math.min(...waits), 1) : 0;
 }
 
 export function pickRotatingWallet<T extends RotationWallet>(

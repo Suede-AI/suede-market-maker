@@ -2,9 +2,11 @@ node_modules/
 dist/
 .env
 wallets.json
+wallets.backup-*.json
 dashboard-config.json
 funding-wallet.json
 funding-wallet.*.json
+.local-wallets/
 *.log
 *.err.log
 *.jsonl
