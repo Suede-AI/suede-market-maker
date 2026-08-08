@@ -510,7 +510,8 @@ const html = String.raw`<!doctype html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Suede Market Maker</title>
+  <title>Suede Market Maker | Jason Colapietro</title>
+  <meta name="description" content="The Suede Labs AI market maker control desk, built by Jason Colapietro." />
   <style>
     :root {
       color-scheme: dark;
@@ -533,7 +534,7 @@ const html = String.raw`<!doctype html>
       margin: 0;
       background: var(--bg);
       color: var(--text);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: var(--font-body, "Avenir Next", "Segoe UI", sans-serif);
       letter-spacing: 0;
     }
     header {
@@ -1096,34 +1097,468 @@ const html = String.raw`<!doctype html>
       .wallet-card-actions button { flex: 1; }
       .wallet-totals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
+
+    /* Suede control desk: retro-technical product register */
+    :root {
+      --color-surface-base: oklch(0.115 0.016 250);
+      --color-surface-elevated: oklch(0.155 0.018 250);
+      --color-surface-overlay: oklch(0.195 0.022 250);
+      --color-border-subtle: oklch(0.92 0.01 250 / .14);
+      --color-border-strong: oklch(0.72 0.14 246 / .62);
+      --color-text-primary: oklch(0.955 0.012 245);
+      --color-text-secondary: oklch(0.74 0.025 245);
+      --color-text-disabled: oklch(0.58 0.018 245);
+      --color-brand: oklch(0.7 0.16 246);
+      --color-brand-soft: oklch(0.7 0.16 246 / .14);
+      --color-live: oklch(0.83 0.17 150);
+      --color-danger: oklch(0.68 0.18 25);
+      --color-warning: oklch(0.82 0.14 82);
+      --font-display: "Avenir Next Condensed", "DIN Condensed", sans-serif;
+      --font-body: "Avenir Next", "Segoe UI", sans-serif;
+      --font-utility: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --bg: var(--color-surface-base);
+      --panel: var(--color-surface-elevated);
+      --panel-2: var(--color-surface-overlay);
+      --panel-3: oklch(0.095 0.014 250);
+      --line: var(--color-border-subtle);
+      --text: var(--color-text-primary);
+      --muted: var(--color-text-secondary);
+      --green: var(--color-live);
+      --red: var(--color-danger);
+      --yellow: var(--color-warning);
+      --blue: var(--color-brand);
+      --focus: oklch(0.82 0.13 246);
+      --shadow: none;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      background: var(--color-surface-base);
+      color: var(--color-text-primary);
+      font-family: var(--font-body);
+    }
+    ::selection { background: var(--color-brand); color: var(--color-surface-base); }
+    .masthead {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      grid-template-areas:
+        "brand status founder"
+        "nav nav nav";
+      align-items: center;
+      gap: 10px 18px;
+      padding: 10px max(16px, calc((100vw - 1400px) / 2 + 14px)) 0;
+      border-bottom: 1px solid var(--color-border-strong);
+      background: oklch(0.105 0.018 250 / .97);
+      backdrop-filter: none;
+    }
+    .brand {
+      grid-area: brand;
+      gap: 14px;
+    }
+    .brand img {
+      width: 54px;
+      height: 54px;
+      border: 1px solid var(--color-border-strong);
+      border-radius: 10px;
+      object-fit: cover;
+      filter: none;
+    }
+    .brand-copy { display: grid; gap: 1px; min-width: 0; }
+    .brand-kicker,
+    .brand-subtitle,
+    .founder-mark span,
+    .manifest-kicker,
+    .token-seal span {
+      color: var(--color-text-secondary);
+      font-family: var(--font-utility);
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1.3;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(1.65rem, 1.35rem + 1vw, 2.35rem);
+      font-weight: 800;
+      line-height: 1;
+    }
+    .masthead .status {
+      grid-area: status;
+      min-height: 36px;
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 8px;
+      padding: 0 12px;
+      background: var(--color-surface-elevated);
+      font-family: var(--font-utility);
+      font-size: 11px;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      box-shadow: 0 0 0 3px oklch(0.68 0.18 25 / .12);
+    }
+    .dot.on { box-shadow: 0 0 0 3px oklch(0.83 0.17 150 / .12); }
+    .founder-mark {
+      grid-area: founder;
+      display: grid;
+      min-width: 206px;
+      border-left: 1px solid var(--color-border-strong);
+      padding: 3px 0 3px 16px;
+      color: var(--color-text-primary);
+      text-decoration: none;
+    }
+    .founder-mark strong {
+      font-family: var(--font-display);
+      font-size: clamp(1.1rem, 1rem + .35vw, 1.35rem);
+      line-height: 1.15;
+    }
+    .founder-mark:hover strong { color: var(--color-brand); }
+    .nav {
+      grid-area: nav;
+      width: 100%;
+      max-width: none;
+      gap: 0;
+      padding: 0;
+      border-top: 1px solid var(--color-border-subtle);
+    }
+    .nav a {
+      min-height: 34px;
+      border: 0;
+      border-right: 1px solid var(--color-border-subtle);
+      border-radius: 0;
+      padding: 0 14px;
+      background: transparent;
+      color: var(--color-text-secondary);
+      font-family: var(--font-utility);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .nav a:first-child { border-left: 1px solid var(--color-border-subtle); }
+    .nav a:hover,
+    .nav a:focus-visible {
+      border-color: var(--color-border-subtle);
+      background: var(--color-brand-soft);
+      color: var(--color-text-primary);
+    }
+    .suede-band { padding-top: 18px; }
+    .suede-band-inner {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(250px, .65fr);
+      gap: 20px;
+      overflow: hidden;
+      border: 1px solid var(--color-border-strong);
+      border-radius: 12px;
+      background: var(--color-surface-elevated);
+      color: var(--color-text-primary);
+      padding: 22px;
+    }
+    .manifest { position: relative; z-index: 1; max-width: 760px; }
+    .manifest h2 {
+      margin: 8px 0 10px;
+      max-width: 18ch;
+      color: var(--color-text-primary);
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 1.5rem + 2vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.02;
+    }
+    .manifest p {
+      max-width: 68ch;
+      margin: 0;
+      color: var(--color-text-secondary);
+      font-size: clamp(.9rem, .86rem + .18vw, 1rem);
+      line-height: 1.55;
+    }
+    .creator-credit {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      align-content: center;
+      border-top: 3px solid var(--color-brand);
+      background: var(--color-surface-overlay);
+      padding: 16px;
+    }
+    .creator-credit > span,
+    .creator-credit .creator-role {
+      color: var(--color-text-secondary);
+      font-family: var(--font-utility);
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+    .creator-credit strong {
+      margin: 3px 0;
+      font-family: var(--font-display);
+      font-size: clamp(1.65rem, 1.3rem + 1.1vw, 2.35rem);
+      line-height: 1;
+    }
+    .creator-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .creator-links a,
+    .suede-link-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      border: 1px solid var(--color-border-strong);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--color-text-primary);
+      padding: 0 10px;
+      font-family: var(--font-utility);
+      font-size: 10px;
+      font-weight: 700;
+      text-decoration: none;
+      text-transform: uppercase;
+    }
+    .creator-links a:hover,
+    .suede-link-button:hover { background: var(--color-brand-soft); text-decoration: none; }
+    .token-seal {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-column: 1 / -1;
+      grid-template-columns: auto auto minmax(0, 1fr);
+      align-items: center;
+      gap: 12px;
+      border-top: 1px solid var(--color-border-subtle);
+      padding-top: 14px;
+    }
+    .token-seal strong { color: var(--color-live); font-family: var(--font-utility); }
+    .token-seal code {
+      max-width: none;
+      color: var(--color-text-secondary);
+      text-align: right;
+    }
+    .summary {
+      gap: 0;
+      padding-top: 12px;
+    }
+    .metric {
+      min-height: 68px;
+      border: 1px solid var(--color-border-subtle);
+      border-right: 0;
+      border-radius: 0;
+      background: var(--color-surface-elevated);
+      padding: 11px 12px;
+    }
+    .metric:first-child { border-radius: 8px 0 0 8px; }
+    .metric:last-child { border-right: 1px solid var(--color-border-subtle); border-radius: 0 8px 8px 0; }
+    .metric span {
+      color: var(--color-text-secondary);
+      font-family: var(--font-utility);
+      font-size: 9px;
+      letter-spacing: 0;
+    }
+    .metric strong {
+      margin-top: 7px;
+      font-family: var(--font-display);
+      font-size: clamp(1rem, .9rem + .35vw, 1.3rem);
+    }
+    main { grid-template-columns: minmax(0, 1.22fr) minmax(360px, .78fr); }
+    section {
+      border-color: var(--color-border-subtle);
+      border-radius: 10px;
+      background: var(--color-surface-elevated);
+      box-shadow: none;
+    }
+    section h2,
+    .control-group h3 {
+      color: var(--color-text-primary);
+      font-family: var(--font-display);
+      font-weight: 700;
+      text-transform: none;
+    }
+    section h2 { font-size: clamp(.95rem, .9rem + .22vw, 1.1rem); }
+    .action-dock {
+      border: 1px solid var(--color-border-strong);
+      border-radius: 8px;
+      background: var(--color-surface-base);
+      box-shadow: none;
+    }
+    .action-copy strong { color: var(--color-text-primary); }
+    .control-groups { gap: 0 18px; }
+    .control-group {
+      border: 0;
+      border-top: 1px solid var(--color-border-subtle);
+      border-radius: 0;
+      background: transparent;
+      padding: 16px 0;
+    }
+    .control-group h3 { font-size: clamp(.85rem, .8rem + .18vw, .98rem); }
+    label { color: var(--color-text-secondary); font-family: var(--font-utility); font-size: 10px; }
+    input,
+    select {
+      border-color: var(--color-border-subtle);
+      border-radius: 6px;
+      background: var(--color-surface-base);
+      color: var(--color-text-primary);
+      font-family: var(--font-utility);
+      font-size: 12px;
+    }
+    input:hover,
+    select:hover { border-color: var(--color-border-strong); }
+    input:focus-visible,
+    select:focus-visible,
+    button:focus-visible,
+    a:focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: 2px;
+    }
+    button {
+      border-color: var(--color-border-subtle);
+      border-radius: 6px;
+      background: var(--color-surface-overlay);
+      color: var(--color-text-primary);
+      font-family: var(--font-utility);
+      font-size: 11px;
+      transition: background .22s cubic-bezier(.16, 1, .3, 1), border-color .22s cubic-bezier(.16, 1, .3, 1), transform .22s cubic-bezier(.16, 1, .3, 1);
+    }
+    button:hover { border-color: var(--color-border-strong); background: var(--color-brand-soft); transform: translate3d(0, -1px, 0); }
+    button.primary { border-color: var(--color-live); background: var(--color-live); color: var(--color-surface-base); }
+    button.primary:hover { background: oklch(0.88 0.17 150); }
+    button.danger { border-color: var(--color-danger); background: oklch(0.42 0.12 25); }
+    button.warning { border-color: var(--color-warning); background: oklch(0.34 0.08 82); }
+    button:disabled { color: var(--color-text-disabled); transform: none; }
+    .row,
+    .wallet-total-card,
+    .result-box {
+      border-color: var(--color-border-subtle);
+      background: var(--color-surface-base);
+    }
+    .wallet-total-card { border-radius: 6px; }
+    .wallet-index,
+    .wallet-balances span { background: var(--color-surface-overlay); }
+    .logs-panel { top: 112px; }
+    pre { background: oklch(0.08 0.014 250); color: oklch(0.84 0.05 212); }
+    .suede-footer-inner {
+      border-color: var(--color-border-strong);
+      border-radius: 10px;
+      background: var(--color-surface-elevated);
+      box-shadow: none;
+    }
+    .suede-footer img {
+      width: 58px;
+      height: 58px;
+      border: 1px solid var(--color-border-strong);
+      border-radius: 8px;
+      object-fit: cover;
+      filter: none;
+    }
+    .suede-footer strong {
+      color: var(--color-text-primary);
+      font-family: var(--font-display);
+      font-size: clamp(1.05rem, .95rem + .35vw, 1.3rem);
+    }
+    .suede-footer a { color: var(--color-brand); }
+    @media (max-width: 900px) {
+      .masthead {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+          "brand status"
+          "founder founder"
+          "nav nav";
+      }
+      .founder-mark {
+        min-width: 0;
+        border-top: 1px solid var(--color-border-subtle);
+        border-left: 0;
+        padding: 8px 0 0;
+      }
+      .suede-band-inner { grid-template-columns: 1fr; }
+      .token-seal { grid-template-columns: auto 1fr; }
+      .token-seal code { grid-column: 1 / -1; text-align: left; }
+      main { grid-template-columns: 1fr; }
+      .logs-panel { position: static; }
+    }
+    @media (max-width: 560px) {
+      .masthead { padding-inline: 12px; }
+      .brand img { width: 44px; height: 44px; }
+      .brand-kicker { display: none; }
+      .brand-subtitle { max-width: 24ch; white-space: normal; }
+      .masthead .status { min-height: 32px; padding: 0 9px; }
+      .founder-mark strong { font-size: 1.1rem; }
+      .nav { overflow-x: auto; }
+      .nav a { flex: 0 0 auto; min-height: 44px; padding: 0 12px; }
+      .suede-band { padding: 12px 12px 0; }
+      .suede-band-inner { gap: 14px; padding: 16px; }
+      .manifest h2 { font-size: clamp(1.8rem, 1.55rem + 1vw, 2.1rem); }
+      .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-inline: 12px; }
+      .metric,
+      .metric:first-child,
+      .metric:last-child { border: 1px solid var(--color-border-subtle); border-radius: 0; }
+      .metric:nth-child(1) { border-radius: 8px 0 0 0; }
+      .metric:nth-child(2) { border-radius: 0 8px 0 0; }
+      .metric:nth-last-child(2) { border-radius: 0 0 0 8px; }
+      .metric:last-child { border-radius: 0 0 8px 0; }
+      main { padding: 12px; }
+      .control-groups { grid-template-columns: 1fr; }
+      .creator-links a { flex: 1 1 120px; }
+      button,
+      input,
+      select,
+      .creator-links a { min-height: 44px; }
+      .wallet-card-actions button { min-height: 44px; }
+      .suede-footer { padding-inline: 12px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: 0ms !important; transition-duration: 0ms !important; }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <div class="topbar">
-      <div class="brand">
-        <img src="/suede-logo.png" alt="Suede AI" />
-        <h1>Suede Market Maker</h1>
-        <span class="brand-lock">Suede build</span>
+  <header class="masthead">
+    <div class="brand">
+      <img src="https://raw.githubusercontent.com/JasonColapietro/suede-creator-skills/5101ac66214193608b97a2ca314772c7037693de/docs/assets/suede-ai-logo-transparent.png" alt="Suede Labs AI mark" />
+      <div class="brand-copy">
+        <span class="brand-kicker">Suede Labs AI / Market Infrastructure</span>
+        <h1>Market Maker</h1>
+        <span class="brand-subtitle">Solana execution desk for $SUEDE</span>
       </div>
-      <div class="status"><span id="dot" class="dot"></span><span id="status">Loading</span></div>
     </div>
+    <div class="status" aria-live="polite"><span id="dot" class="dot"></span><span id="status">Loading</span></div>
+    <a class="founder-mark" href="https://suedeai.ai/founder" target="_blank" rel="noreferrer">
+      <span>Founder &amp; builder</span>
+      <strong>Jason Colapietro</strong>
+    </a>
     <nav class="nav" aria-label="Dashboard sections">
-      <a href="#controls">Controls</a>
-      <a href="#walletPanel">Wallets</a>
-      <a href="#fundingPanel">Funding</a>
-      <a href="#logsPanel">Logs</a>
-      <a href="https://suedeai.ai" target="_blank" rel="noreferrer">Suede</a>
+      <a href="#controls">Run Bot</a>
+      <a href="#walletPanel">Manage Wallets</a>
+      <a href="#fundingPanel">Move Funds</a>
+      <a href="#logsPanel">Read Logs</a>
+      <a href="https://suedeai.ai" target="_blank" rel="noreferrer">Suede Labs AI</a>
     </nav>
   </header>
   <div class="suede-band">
     <div class="suede-band-inner">
-      <span>Brought to you at no cost courtesy of <a href="https://suedeai.ai" target="_blank" rel="noreferrer">Suede Labs AI</a>.</span>
-      <a class="suede-link-button" href="https://suedeai.ai" target="_blank" rel="noreferrer">Visit Suede AI</a>
-      <code>Default $SUEDE: ${SUEDE_TOKEN_MINT}</code>
+      <div class="manifest">
+        <span class="manifest-kicker">Local control desk // transparent execution</span>
+        <h2>Operate the market. See every move.</h2>
+        <p>Self-hosted market infrastructure from Suede Labs AI. Control wallet rotation, funding, strategy, trades, and fees from one auditable desk.</p>
+      </div>
+      <aside class="creator-credit" aria-label="Creator credit">
+        <span>Designed and built by</span>
+        <strong>Jason Colapietro</strong>
+        <span class="creator-role">Founder, Suede Labs AI</span>
+        <div class="creator-links">
+          <a href="https://suedeai.ai/founder" target="_blank" rel="noreferrer">Founder profile</a>
+          <a href="https://x.com/johnnysuede" target="_blank" rel="noreferrer">@johnnysuede</a>
+        </div>
+      </aside>
+      <div class="token-seal">
+        <span>Default asset</span>
+        <strong>$SUEDE</strong>
+        <code>${SUEDE_TOKEN_MINT}</code>
+      </div>
     </div>
   </div>
-  <div class="summary" aria-label="Dashboard summary">
+  <div class="summary" aria-label="Live Suede market operations tape">
     <div class="metric"><span>Bot</span><strong id="summaryStatus">Stopped</strong></div>
     <div class="metric"><span>Mode</span><strong id="summaryMode">-</strong></div>
     <div class="metric"><span>Rotation</span><strong id="summaryRotation">-</strong></div>
@@ -1207,7 +1642,7 @@ const html = String.raw`<!doctype html>
               </div>
             </div>
             <div class="control-group">
-              <h3>Timing & Addresses</h3>
+              <h3>Timing &amp; Addresses</h3>
               <div class="control-grid">
                 <label>Delay Min Sec
                   <input id="DELAY_MIN_SEC" inputmode="decimal" />
@@ -1374,16 +1809,15 @@ const html = String.raw`<!doctype html>
   </main>
   <footer class="suede-footer">
     <div class="suede-footer-inner">
-      <img src="/suede-logo.png" alt="Suede AI" />
+      <img src="https://raw.githubusercontent.com/JasonColapietro/suede-creator-skills/5101ac66214193608b97a2ca314772c7037693de/docs/assets/suede-ai-logo-transparent.png" alt="Suede Labs AI mark" />
       <div>
-        <strong>Built by Suede Labs AI</strong>
-        <span>Transparent self-hosted tooling for builders. Defaulted for $SUEDE, configurable for your own token.</span>
+        <strong>Suede Labs AI × Jason Colapietro</strong>
+        <span>Transparent, self-hosted market infrastructure. Defaulted for $SUEDE and configurable for your own token.</span>
       </div>
       <div class="footer-links">
         <a href="https://suedeai.ai" target="_blank" rel="noreferrer">suedeai.ai</a>
-        <a href="https://suedeai.org" target="_blank" rel="noreferrer">suedeai.org</a>
-        <a href="https://t.me/AISUEDE" target="_blank" rel="noreferrer">Telegram @AISUEDE</a>
-        <span>Brought to you courtesy of Suede Labs AI.</span>
+        <a href="https://suedeai.ai/founder" target="_blank" rel="noreferrer">Jason Colapietro</a>
+        <a href="https://t.me/AISUEDE" target="_blank" rel="noreferrer">@AISUEDE</a>
       </div>
     </div>
   </footer>
@@ -1507,7 +1941,7 @@ const html = String.raw`<!doctype html>
               '</div>' +
             '</div>';
           }).join("")
-        : '<div class="muted">No wallets.json found yet.</div>';
+        : '<div class="muted">No managed wallets yet. Choose a wallet count above, then select Add Wallets.</div>';
       logs.textContent = (status.logs || []).join(newline);
       if (logs.textContent) logs.textContent += newline;
       logs.scrollTop = logs.scrollHeight;
@@ -1612,7 +2046,7 @@ const html = String.raw`<!doctype html>
               const wallet = t.wallet ? shortKey(t.wallet) : "";
               return '<div class="row"><span>' + side + ' ' + amount + fee + '</span><code>' + wallet + '</code></div>';
             }).join("")
-          : '<div class="muted">No trades logged yet.</div>';
+          : '<div class="muted">No trades logged yet. Start the bot in dry-run or live mode to populate the ledger.</div>';
       } catch (err) {
         document.getElementById("trades").innerHTML = '<div class="muted">Trades unavailable. Refresh when the dashboard is ready.</div>';
       }
