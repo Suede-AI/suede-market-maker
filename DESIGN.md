@@ -9,7 +9,7 @@ A founder or market operator is reviewing wallet activity on a secondary screen 
 - Register: product, retro-technical control desk
 - Primary job: operate and inspect the local Solana market maker
 - Signature: the six-cell live Suede operations tape beneath the product manifest
-- Brand hierarchy: Suede Labs AI first, product second, founder and builder Jason Colapietro always visible
+- Brand hierarchy: Suede AI first, product second, founder and builder Jason Colapietro always visible
 
 ## Tokens
 

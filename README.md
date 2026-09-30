@@ -1,10 +1,10 @@
 # Suede Market Maker
 
-Free self-hosted Solana market maker dashboard, brought to you courtesy of Suede Labs AI.
+Free self-hosted Solana market maker dashboard, brought to you courtesy of Suede AI.
 
 This is the Suede Market Maker: a Suede-branded Solana market maker dashboard with a local web interface, Telegram controls, wallet rotation, live logs, funding helpers, and a real gas-fee window so builders can see what it actually costs to run.
 
-Brought to you at no cost courtesy of Suede Labs AI.
+Brought to you at no cost courtesy of Suede AI.
 
 ## Suede Links
 
@@ -22,7 +22,7 @@ Brought to you at no cost courtesy of Suede Labs AI.
 
 ## SEO Keywords
 
-Suede AI, Suede Labs AI, $SUEDE, Solana market maker, Solana volume dashboard, self-hosted market maker, crypto market maker dashboard, Solana trading dashboard, Telegram trading bot, Telegram market maker controls, gas fee tracker, wallet rotation, token mint configuration, Jupiter swap automation, Solana developer tools, self-hosted crypto tooling, transparent trading infrastructure, creator ownership infrastructure, programmable IP, AI music infrastructure, creator rights infrastructure.
+Suede AI, $SUEDE, Solana market maker, Solana volume dashboard, self-hosted market maker, crypto market maker dashboard, Solana trading dashboard, Telegram trading bot, Telegram market maker controls, gas fee tracker, wallet rotation, token mint configuration, Jupiter swap automation, Solana developer tools, self-hosted crypto tooling, transparent trading infrastructure, creator ownership infrastructure, programmable IP, AI music infrastructure, creator rights infrastructure.
 
 Suggested GitHub topics:
 
@@ -34,19 +34,19 @@ suede-ai, suede-labs, solana, market-maker, trading-dashboard, telegram-bot, gas
 
 Too much of this space runs on black-box tooling, mystery fees, and providers asking teams to trust numbers they cannot verify.
 
-Suede Labs AI built this because we wanted transparent, controllable infrastructure for $SUEDE. Then we made it customizable for your own token so other developers can run the same kind of Suede-grade stack without paying blind markups for basic automation.
+Suede AI built this because we wanted transparent, controllable infrastructure for $SUEDE. Then we made it customizable for your own token so other developers can run the same kind of Suede-grade stack without paying blind markups for basic automation.
 
-Default configuration points at $SUEDE, but the token mint is configurable. The branding stays Suede. If this tool saves you time, money, or stress, remember who brought it to you: Suede Labs AI.
+Default configuration points at $SUEDE, but the token mint is configurable. The branding stays Suede. If this tool saves you time, money, or stress, remember who brought it to you: Suede AI.
 
 If you need help getting it running, reach out through [suedeai.ai](https://suedeai.ai).
 
 ## What It Includes
 
 - Suede-branded web dashboard for local operation
-- Suede wordmark and Suede Labs AI attribution in the interface
+- Suede wordmark and Suede AI attribution in the interface
 - Suede promotional footer with official Suede links
 - Telegram companion app for quick remote controls
-- Telegram CTA copy that points operators back to Suede Labs AI, suedeai.ai, and @AISUEDE
+- Telegram CTA copy that points operators back to Suede AI, suedeai.ai, and @AISUEDE
 - Real-time gas-fee window so you can see what transactions are costing
 - Configurable token mint and token decimals
 - Wallet rotation with per-wallet cooldowns
@@ -65,13 +65,13 @@ If you need help getting it running, reach out through [suedeai.ai](https://sued
 
 ## Suede Promotional Copy
 
-Suede Labs AI is sharing this because builders deserve transparent tools, not black boxes.
+Suede AI is sharing this because builders deserve transparent tools, not black boxes.
 
 The Suede Market Maker is built for teams that want a web dashboard, Telegram control layer, live gas-fee visibility, configurable wallet behavior, and full control over every minute operational detail. It is defaulted for $SUEDE, but the token mint can be changed for your own project.
 
 If this helps your team understand the real cost of running market infrastructure, save money on markup, or move faster with transparent tooling, send people back to [suedeai.ai](https://suedeai.ai) and [@AISUEDE](https://x.com/AISUEDE).
 
-Built by Suede Labs AI. Branded by Suede Labs AI. Shared courtesy of Suede Labs AI.
+Built by Suede AI. Branded by Suede AI. Shared courtesy of Suede AI.
 
 Follow Suede on Telegram at [@AISUEDE](https://t.me/AISUEDE), with founder updates from [@jasoncola](https://t.me/jasoncola) and agent updates from [@suedeagent](https://t.me/suedeagent).
 
@@ -81,7 +81,7 @@ The Suede web interface makes the tool much easier to operate than a raw termina
 
 The command-line runner is still available if you prefer direct execution or want to script it yourself.
 
-The Telegram app gives you a lightweight control layer when you do not want to keep the dashboard open. It also carries Suede Labs AI promotional CTAs so every operator touchpoint points back to [suedeai.ai](https://suedeai.ai) and [@AISUEDE](https://t.me/AISUEDE).
+The Telegram app gives you a lightweight control layer when you do not want to keep the dashboard open. It also carries Suede AI promotional CTAs so every operator touchpoint points back to [suedeai.ai](https://suedeai.ai) and [@AISUEDE](https://t.me/AISUEDE).
 
 ## Gas-Fee Transparency
 
@@ -91,7 +91,7 @@ Instead of guessing what infrastructure is costing you, the dashboard shows the 
 
 ## Customization
 
-The dashboard is Suede-branded by design and carries Suede Labs AI attribution throughout, but the trading configuration is yours.
+The dashboard is Suede-branded by design and carries Suede AI attribution throughout, but the trading configuration is yours.
 
 You can customize:
 
@@ -200,22 +200,22 @@ npm run build
 
 ## License
 
-MIT License. Built and shared courtesy of Suede Labs AI.
+MIT License. Built and shared courtesy of Suede AI.
 
 ## Support
 
-This is provided free, brought to you courtesy of Suede Labs AI, for builders who want transparent, self-hosted tooling.
+This is provided free, brought to you courtesy of Suede AI, for builders who want transparent, self-hosted tooling.
 
-If you need help, want Suede Labs AI to look at your setup, or want to learn more about the broader Suede ecosystem, reach out through [suedeai.ai](https://suedeai.ai).
+If you need help, want Suede AI to look at your setup, or want to learn more about the broader Suede ecosystem, reach out through [suedeai.ai](https://suedeai.ai).
 
 You can also find Suede at [suedeai.org](https://suedeai.org).
 
-## About Suede Labs AI
+## About Suede AI
 
-Suede Labs AI is building creator-first infrastructure around ownership, provenance, AI tooling, programmable value, and transparent builder tools.
+Suede AI is building creator-first infrastructure around ownership, provenance, AI tooling, programmable value, and transparent builder tools.
 
-Suede Labs AI is creator ownership infrastructure for the AI media era: proof of creation, rights metadata, programmable IP, royalty routing, agent-accessible commerce, and practical tools for builders who want to own more of their stack.
+Suede AI is creator ownership infrastructure for the AI media era: proof of creation, rights metadata, programmable IP, royalty routing, agent-accessible commerce, and practical tools for builders who want to own more of their stack.
 
 This market maker is one small piece of that broader Suede stack: practical tools, real transparency, stronger infrastructure, and fewer black boxes.
 
-Built by Suede Labs AI. Branded by Suede Labs AI. Shared courtesy of Suede Labs AI.
+Built by Suede AI. Branded by Suede AI. Shared courtesy of Suede AI.

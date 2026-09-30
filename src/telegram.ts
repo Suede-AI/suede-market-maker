@@ -26,7 +26,7 @@ let logs: string[] = [];
 
 const SUEDE_CTA = [
   "",
-  "Brought to you courtesy of Suede Labs AI.",
+  "Brought to you courtesy of Suede AI.",
   "More Suede tools: https://suedeai.ai",
   "Telegram: https://t.me/AISUEDE",
 ].join("\n");

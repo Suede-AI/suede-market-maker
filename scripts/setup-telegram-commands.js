@@ -69,7 +69,7 @@ async function main() {
   const shortDescription =
     "Suede Market Maker: self-hosted Solana controls, gas-fee visibility, and Telegram ops.";
   const description = [
-    "Suede Market Maker by Suede Labs AI.",
+    "Suede Market Maker by Suede AI.",
     "",
     "Transparent self-hosted Solana market tooling with a web dashboard, Telegram controls, wallet rotation, funding tools, live logs, and gas-fee visibility.",
     "",
