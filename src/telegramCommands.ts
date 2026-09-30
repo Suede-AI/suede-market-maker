@@ -38,7 +38,7 @@ export function parseTelegramCommand(text: string): TelegramCommand {
 export function telegramHelpText(): string {
   return [
     "Suede Market Maker",
-    "Brought to you courtesy of Suede Labs AI.",
+    "Brought to you courtesy of Suede AI.",
     "",
     "Transparent self-hosted Solana tooling with web controls, Telegram commands, wallet rotation, funding tools, and gas-fee visibility.",
     "",

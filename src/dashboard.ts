@@ -511,7 +511,7 @@ const html = String.raw`<!doctype html>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Suede Market Maker | Jason Colapietro</title>
-  <meta name="description" content="The Suede Labs AI market maker control desk, built by Jason Colapietro." />
+  <meta name="description" content="The Suede AI market maker control desk, built by Jason Colapietro." />
   <style>
     :root {
       color-scheme: dark;
@@ -1515,9 +1515,9 @@ const html = String.raw`<!doctype html>
 <body>
   <header class="masthead">
     <div class="brand">
-      <img src="https://raw.githubusercontent.com/JasonColapietro/suede-creator-skills/5101ac66214193608b97a2ca314772c7037693de/docs/assets/suede-ai-logo-transparent.png" alt="Suede Labs AI mark" />
+      <img src="https://raw.githubusercontent.com/JasonColapietro/suede-creator-skills/5101ac66214193608b97a2ca314772c7037693de/docs/assets/suede-ai-logo-transparent.png" alt="Suede AI mark" />
       <div class="brand-copy">
-        <span class="brand-kicker">Suede Labs AI / Market Infrastructure</span>
+        <span class="brand-kicker">Suede AI / Market Infrastructure</span>
         <h1>Market Maker</h1>
         <span class="brand-subtitle">Solana execution desk for $SUEDE</span>
       </div>
@@ -1532,7 +1532,7 @@ const html = String.raw`<!doctype html>
       <a href="#walletPanel">Manage Wallets</a>
       <a href="#fundingPanel">Move Funds</a>
       <a href="#logsPanel">Read Logs</a>
-      <a href="https://suedeai.ai" target="_blank" rel="noreferrer">Suede Labs AI</a>
+      <a href="https://suedeai.ai" target="_blank" rel="noreferrer">Suede AI</a>
     </nav>
   </header>
   <div class="suede-band">
@@ -1540,12 +1540,12 @@ const html = String.raw`<!doctype html>
       <div class="manifest">
         <span class="manifest-kicker">Local control desk // transparent execution</span>
         <h2>Operate the market. See every move.</h2>
-        <p>Self-hosted market infrastructure from Suede Labs AI. Control wallet rotation, funding, strategy, trades, and fees from one auditable desk.</p>
+        <p>Self-hosted market infrastructure from Suede AI. Control wallet rotation, funding, strategy, trades, and fees from one auditable desk.</p>
       </div>
       <aside class="creator-credit" aria-label="Creator credit">
         <span>Designed and built by</span>
         <strong>Jason Colapietro</strong>
-        <span class="creator-role">Founder, Suede Labs AI</span>
+        <span class="creator-role">Founder, Suede AI</span>
         <div class="creator-links">
           <a href="https://suedeai.ai/founder" target="_blank" rel="noreferrer">Founder profile</a>
           <a href="https://x.com/johnnysuede" target="_blank" rel="noreferrer">@johnnysuede</a>
@@ -1809,9 +1809,9 @@ const html = String.raw`<!doctype html>
   </main>
   <footer class="suede-footer">
     <div class="suede-footer-inner">
-      <img src="https://raw.githubusercontent.com/JasonColapietro/suede-creator-skills/5101ac66214193608b97a2ca314772c7037693de/docs/assets/suede-ai-logo-transparent.png" alt="Suede Labs AI mark" />
+      <img src="https://raw.githubusercontent.com/JasonColapietro/suede-creator-skills/5101ac66214193608b97a2ca314772c7037693de/docs/assets/suede-ai-logo-transparent.png" alt="Suede AI mark" />
       <div>
-        <strong>Suede Labs AI × Jason Colapietro</strong>
+        <strong>Suede AI × Jason Colapietro</strong>
         <span>Transparent, self-hosted market infrastructure. Defaulted for $SUEDE and configurable for your own token.</span>
       </div>
       <div class="footer-links">

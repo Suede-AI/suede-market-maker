@@ -18,4 +18,4 @@ Use `.env.example` as the public template and keep real values only in your loca
 
 If you need help with setup, reach out through [suedeai.ai](https://suedeai.ai).
 
-Brought to you courtesy of Suede Labs AI.
+Brought to you courtesy of Suede AI.
