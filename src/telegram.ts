@@ -3,6 +3,11 @@ import path from "path";
 import { spawn, type ChildProcessWithoutNullStreams } from "child_process";
 import dotenv from "dotenv";
 import { distributeFunding, getFundingStatus, sweepFunding, type FundingRunResult } from "./funding";
+import {
+  describeRuntime,
+  scanExternalBotProcess,
+  type BotProcessScan,
+} from "./runtimeGuard";
 import { parseTelegramCommand, telegramHelpText, type TelegramCommand } from "./telegramCommands";
 
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
@@ -158,9 +163,38 @@ function authorized(chatId: number): boolean {
   return allowedChatIds.has(String(chatId));
 }
 
-function startMarketMaker(): string {
+type BotProcessScanner = (excludedPids?: number[]) => BotProcessScan;
+
+export function marketMakerActionBlock(
+  action: string,
+  scan: BotProcessScanner = scanExternalBotProcess
+): string | null {
+  const managedPid = botProcess && !botProcess.killed ? botProcess.pid ?? null : null;
+  const externalScan = scan(managedPid ? [managedPid] : []);
+  if (!externalScan.reliable) {
+    return `Safety lock: unable to verify that the market maker is stopped before ${action}`;
+  }
+
+  const runtime = describeRuntime(managedPid, externalScan.bot);
+  if (!runtime.running) return null;
+
+  const location = runtime.externalRunning ? " in tmux or its terminal" : " from Telegram";
+  return `Stop the market maker${location} before ${action}`;
+}
+
+export function startMarketMaker(
+  scan: BotProcessScanner = scanExternalBotProcess
+): string {
   if (botProcess && !botProcess.killed) {
     return `Market maker already running pid=${botProcess.pid}`;
+  }
+
+  const externalScan = scan();
+  if (!externalScan.reliable) {
+    return "Safety lock: unable to verify that another market maker loop is not already running";
+  }
+  if (externalScan.bot) {
+    return `Market maker already running outside Telegram pid=${externalScan.bot.pid}`;
   }
 
   logs = [];
@@ -184,6 +218,13 @@ function startMarketMaker(): string {
 
 function stopMarketMaker(): string {
   if (!botProcess || botProcess.killed) {
+    const externalScan = scanExternalBotProcess();
+    if (!externalScan.reliable) {
+      return "Unable to verify whether a market maker loop is running";
+    }
+    if (externalScan.bot) {
+      return `Market maker is running outside Telegram pid=${externalScan.bot.pid}; stop it in tmux or its terminal`;
+    }
     return "Market maker is not running";
   }
 
@@ -196,10 +237,21 @@ function stopMarketMaker(): string {
 }
 
 function statusText(): string {
+  const managedPid = botProcess && !botProcess.killed ? botProcess.pid ?? null : null;
+  const externalScan = scanExternalBotProcess(managedPid ? [managedPid] : []);
+  const runtime = describeRuntime(managedPid, externalScan.bot);
+  const runtimeLine = !externalScan.reliable
+    ? "Market maker: runtime check unavailable"
+    : runtime.runtimeSource === "multiple"
+      ? `Market maker: duplicate loops detected pids=${runtime.pid},${runtime.externalPid}`
+      : runtime.runtimeSource === "dashboard"
+        ? `Market maker: running from Telegram pid=${runtime.pid}`
+        : runtime.runtimeSource === "external"
+          ? `Market maker: running externally pid=${runtime.pid}`
+          : "Market maker: stopped";
+
   return [
-    botProcess && !botProcess.killed
-      ? `Market maker: running pid=${botProcess.pid}`
-      : "Market maker: stopped",
+    runtimeLine,
     botStartedAt ? `Started: ${botStartedAt}` : "",
     SUEDE_CTA,
   ].filter(Boolean).join("\n");
@@ -242,14 +294,22 @@ async function handleCommand(command: TelegramCommand): Promise<string> {
         SUEDE_CTA,
       ].join("\n");
     }
-    case "distribute_preview":
-      return fundingResultText("Even distribution preview", await distributeFunding(true));
-    case "distribute":
-      return fundingResultText("Even distribution sent", await distributeFunding(false));
-    case "sweep_preview":
-      return fundingResultText("Sweep preview", await sweepFunding(true));
-    case "sweep":
-      return fundingResultText("Sweep sent", await sweepFunding(false));
+    case "distribute_preview": {
+      const blocked = marketMakerActionBlock("previewing distribution");
+      return blocked ?? fundingResultText("Even distribution preview", await distributeFunding(true));
+    }
+    case "distribute": {
+      const blocked = marketMakerActionBlock("distributing SOL");
+      return blocked ?? fundingResultText("Even distribution sent", await distributeFunding(false));
+    }
+    case "sweep_preview": {
+      const blocked = marketMakerActionBlock("previewing a sweep");
+      return blocked ?? fundingResultText("Sweep preview", await sweepFunding(true));
+    }
+    case "sweep": {
+      const blocked = marketMakerActionBlock("sweeping SOL");
+      return blocked ?? fundingResultText("Sweep sent", await sweepFunding(false));
+    }
     case "bot_start":
       return startMarketMaker();
     case "bot_stop":

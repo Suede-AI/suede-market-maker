@@ -6,28 +6,49 @@ This is the Suede Market Maker: a Suede-branded Solana market maker dashboard wi
 
 Brought to you at no cost courtesy of Suede Labs AI.
 
-## Suede Links
+## Suede Network
 
-- Website: [suedeai.ai](https://suedeai.ai)
-- Suede app: [app.suedeai.ai](https://app.suedeai.ai)
-- Suede foundation site: [suedeai.org](https://suedeai.org)
-- X / Twitter: [@AISUEDE](https://x.com/AISUEDE)
-- Founder X / Twitter: [@johnnysuede](https://x.com/johnnysuede)
-- Telegram: [@AISUEDE](https://t.me/AISUEDE)
-- Founder Telegram: [@jasoncola](https://t.me/jasoncola)
-- Suede Agent Telegram: [@suedeagent](https://t.me/suedeagent)
-- GitHub: [github.com/Suede-AI](https://github.com/Suede-AI)
-- Founder: [suedeai.ai/founder](https://suedeai.ai/founder)
-- Contact: [suedeai.ai](https://suedeai.ai)
+- [Suede Labs AI homepage](https://suedeai.ai)
+- [Suede Labs AI story and thesis](https://suedeai.org)
+- [Create music and video with Suede](https://app.suedeai.ai/create)
+- [Suede IP Registry for ownership and provenance](https://ip.suedeai.ai)
+- [Build and launch agents in Suede Agent Studio](https://agents.suedeai.ai)
+- [Join the Suede Social creator community](https://social.suedeai.ai)
+- [Improve search and AI visibility with Suede SEO](https://seo.suedeai.ai)
+- [Browse the Suede product hub](https://hub.suedeai.ai)
 
-## SEO Keywords
+## Self-Hosted Solana Market Maker And Trading Dashboard
 
-Suede AI, Suede Labs AI, $SUEDE, Solana market maker, Solana volume dashboard, self-hosted market maker, crypto market maker dashboard, Solana trading dashboard, Telegram trading bot, Telegram market maker controls, gas fee tracker, wallet rotation, token mint configuration, Jupiter swap automation, Solana developer tools, self-hosted crypto tooling, transparent trading infrastructure, creator ownership infrastructure, programmable IP, AI music infrastructure, creator rights infrastructure.
+Suede Market Maker is a TypeScript tool for operating configurable Solana token
+activity from a local web dashboard, command-line runner, or Telegram. It
+combines wallet rotation, Jupiter quote and swap execution, SOL funding and
+sweep controls, gas-fee tracking, dry-run testing, and JSONL operational logs.
 
-Suggested GitHub topics:
+Builders evaluating a self-hosted Solana market maker or trading bot can inspect
+quotes and logs in dry-run mode before signing transactions. Token mint,
+decimals, trade sizes, timing, slippage, inventory thresholds, and strategy
+modes remain configurable in the local environment file.
+
+This repository does not promise profit, liquidity, price support, execution
+quality, uninterrupted availability, or regulatory compliance. Review the code,
+start in dry-run mode, and follow the rules that apply to your use case before
+using funds.
+
+### Repository topics
 
 ```text
-suede-ai, suede-labs, solana, market-maker, trading-dashboard, telegram-bot, gas-fees, wallet-rotation, jupiter, typescript, self-hosted, crypto-tools
+suede-ai
+suede-labs
+solana
+market-maker
+trading-dashboard
+telegram-bot
+gas-fees
+wallet-rotation
+jupiter
+typescript
+self-hosted
+crypto-tools
 ```
 
 ## Why We Built It
@@ -158,11 +179,19 @@ Open:
 http://localhost:8787
 ```
 
+The dashboard and Telegram controller use fail-closed process detection on
+macOS and Linux. Windows controller mutations remain safety-locked until
+equivalent process detection is implemented.
+
 Run the bot directly without the dashboard:
 
 ```bash
 npm start
 ```
+
+Direct CLI launches do not share a process-level singleton lock. Check for an
+existing tmux, dashboard, Telegram, or direct bot loop before running this
+command, and never start a second loop against the same wallets.
 
 Run the Telegram companion:
 

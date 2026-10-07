@@ -6,6 +6,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from "child_process";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
 import { distributeFunding, getFundingStatus, sweepFunding } from "./funding";
+import { describeRuntime, scanExternalBotProcess } from "./runtimeGuard";
 import { SUEDE_LOGO_PATH, SUEDE_TOKEN_DECIMALS, SUEDE_TOKEN_MINT } from "./suede";
 
 const PORT = Number(process.env.DASHBOARD_PORT || 8787);
@@ -408,9 +409,12 @@ function feePayload() {
 }
 
 function statusPayload() {
+  const managedPid = bot && !botExited ? bot.pid ?? null : null;
+  const externalScan = scanExternalBotProcess(managedPid ? [managedPid] : []);
+
   return {
-    running: Boolean(bot && !botExited),
-    pid: bot?.pid || null,
+    ...describeRuntime(managedPid, externalScan.bot),
+    runtimeDetectionReliable: externalScan.reliable,
     startedAt: botStartedAt,
     config: dashboardConfig,
     wallets: readWallets(),
@@ -428,8 +432,14 @@ function json(res: http.ServerResponse, value: unknown, status = 200) {
 }
 
 function requireBotStopped(res: http.ServerResponse, action: string): boolean {
-  if (bot && !botExited) {
-    json(res, { error: `Stop the bot before ${action}` }, 409);
+  const runtime = statusPayload();
+  if (!runtime.runtimeDetectionReliable) {
+    json(res, { error: `Unable to verify that the bot is stopped before ${action}` }, 503);
+    return true;
+  }
+  if (runtime.running) {
+    const location = runtime.externalRunning ? " in its tmux or terminal session" : "";
+    json(res, { error: `Stop the bot${location} before ${action}` }, 409);
     return true;
   }
   return false;
@@ -455,6 +465,16 @@ function readBody(req: http.IncomingMessage): Promise<Record<string, unknown>> {
 function startBot(overrides: Record<string, string>) {
   if (bot && !botExited) {
     throw new Error("Bot is already running");
+  }
+
+  const externalScan = scanExternalBotProcess();
+  if (!externalScan.reliable) {
+    throw new Error("Unable to verify that another market maker loop is not already running");
+  }
+  if (externalScan.bot) {
+    throw new Error(
+      `A market maker loop is already running outside the dashboard (PID ${externalScan.bot.pid})`
+    );
   }
 
   const activeConfig = applyDashboardOverrides(overrides);
@@ -510,8 +530,11 @@ const html = String.raw`<!doctype html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Suede Market Maker | Jason Colapietro</title>
-  <meta name="description" content="The Suede Labs AI market maker control desk, built by Jason Colapietro." />
+  <title>Suede Market Maker Control Desk | Suede Labs AI</title>
+  <meta name="description" content="Operate and inspect a self-hosted Solana market maker with wallet rotation, funding controls, live trades, and fee visibility." />
+  <meta name="robots" content="noindex, nofollow, noarchive" />
+  <meta name="googlebot" content="noindex, nofollow, noarchive" />
+  <meta name="referrer" content="no-referrer" />
   <style>
     :root {
       color-scheme: dark;
@@ -1220,9 +1243,11 @@ const html = String.raw`<!doctype html>
     .founder-mark:hover strong { color: var(--color-brand); }
     .nav {
       grid-area: nav;
+      display: flex;
       width: 100%;
       max-width: none;
       gap: 0;
+      overflow: hidden;
       padding: 0;
       border-top: 1px solid var(--color-border-subtle);
     }
@@ -1382,6 +1407,20 @@ const html = String.raw`<!doctype html>
       box-shadow: none;
     }
     .action-copy strong { color: var(--color-text-primary); }
+    .runtime-note {
+      display: block;
+      border-left: 2px solid var(--color-border-strong);
+      margin-top: 5px;
+      padding-left: 8px;
+      color: var(--color-text-secondary);
+      font-family: var(--font-utility);
+      font-size: 10px;
+      line-height: 1.45;
+    }
+    .runtime-note[data-state="external"] { border-color: var(--color-live); color: var(--color-live); }
+    .runtime-note[data-state="multiple"] { border-color: var(--color-danger); color: var(--color-danger); }
+    .runtime-note[data-state="unknown"] { border-color: var(--color-warning); color: var(--color-warning); }
+    .button-cluster.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .control-groups { gap: 0 18px; }
     .control-group {
       border: 0;
@@ -1424,7 +1463,43 @@ const html = String.raw`<!doctype html>
     button.primary:hover { background: oklch(0.88 0.17 150); }
     button.danger { border-color: var(--color-danger); background: oklch(0.42 0.12 25); }
     button.warning { border-color: var(--color-warning); background: oklch(0.34 0.08 82); }
-    button:disabled { color: var(--color-text-disabled); transform: none; }
+    button:disabled { color: var(--color-text-disabled); cursor: not-allowed; transform: none; }
+    button:disabled:hover { border-color: var(--color-border-subtle); background: var(--color-surface-overlay); }
+    .advanced-settings {
+      grid-column: 1 / -1;
+      border-top: 1px solid var(--color-border-subtle);
+      padding-top: 2px;
+    }
+    .advanced-settings summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 44px;
+      color: var(--color-text-primary);
+      cursor: pointer;
+      font-family: var(--font-display);
+      font-size: clamp(.85rem, .8rem + .18vw, .98rem);
+      font-weight: 700;
+    }
+    .advanced-settings summary span {
+      color: var(--color-text-secondary);
+      font-family: var(--font-utility);
+      font-size: 10px;
+      font-weight: 500;
+    }
+    .advanced-settings-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0 18px;
+    }
+    .wallet-create {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      gap: 8px;
+    }
+    .wallet-create button { min-width: 108px; }
     .row,
     .wallet-total-card,
     .result-box {
@@ -1437,6 +1512,7 @@ const html = String.raw`<!doctype html>
     .logs-panel { top: 112px; }
     pre { background: oklch(0.08 0.014 250); color: oklch(0.84 0.05 212); }
     .suede-footer-inner {
+      grid-template-columns: auto minmax(0, 1fr);
       border-color: var(--color-border-strong);
       border-radius: 10px;
       background: var(--color-surface-elevated);
@@ -1456,6 +1532,33 @@ const html = String.raw`<!doctype html>
       font-size: clamp(1.05rem, .95rem + .35vw, 1.3rem);
     }
     .suede-footer a { color: var(--color-brand); }
+    .suede-footer .footer-links {
+      display: grid;
+      grid-column: 1 / -1;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0;
+      border-top: 1px solid var(--color-border-subtle);
+      padding-top: 10px;
+      white-space: normal;
+    }
+    .suede-footer .footer-links a {
+      display: flex;
+      align-items: center;
+      min-height: 34px;
+      border-right: 1px solid var(--color-border-subtle);
+      padding: 0 10px;
+      font-family: var(--font-utility);
+      font-size: 10px;
+      text-decoration: none;
+    }
+    .suede-footer .footer-links a:nth-child(4n) { border-right: 0; }
+    .tabs { align-items: center; justify-content: space-between; }
+    .tabs strong {
+      color: var(--color-text-primary);
+      font-family: var(--font-display);
+      font-size: .95rem;
+      padding-left: 4px;
+    }
     @media (max-width: 900px) {
       .masthead {
         grid-template-columns: minmax(0, 1fr) auto;
@@ -1475,16 +1578,42 @@ const html = String.raw`<!doctype html>
       .token-seal code { grid-column: 1 / -1; text-align: left; }
       main { grid-template-columns: 1fr; }
       .logs-panel { position: static; }
+      .advanced-settings-grid { grid-template-columns: 1fr; }
+      .button-cluster.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .suede-footer .footer-links { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .suede-footer .footer-links a:nth-child(2n) { border-right: 0; }
     }
     @media (max-width: 560px) {
-      .masthead { padding-inline: 12px; }
+      .masthead {
+        position: static;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+          "brand brand"
+          "status founder"
+          "nav nav";
+        gap: 8px 10px;
+        padding-inline: 12px;
+      }
       .brand img { width: 44px; height: 44px; }
       .brand-kicker { display: none; }
-      .brand-subtitle { max-width: 24ch; white-space: normal; }
-      .masthead .status { min-height: 32px; padding: 0 9px; }
+      .brand-subtitle { max-width: none; white-space: normal; }
+      .masthead .status { justify-self: stretch; min-height: 32px; padding: 0 9px; }
+      .founder-mark {
+        align-self: stretch;
+        border-top: 0;
+        border-left: 1px solid var(--color-border-strong);
+        padding: 3px 0 3px 10px;
+      }
       .founder-mark strong { font-size: 1.1rem; }
-      .nav { overflow-x: auto; }
-      .nav a { flex: 0 0 auto; min-height: 44px; padding: 0 12px; }
+      .nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: visible; }
+      .nav a {
+        min-width: 0;
+        min-height: 44px;
+        padding: 0 5px;
+        font-size: 9px;
+        text-align: center;
+        white-space: nowrap;
+      }
       .suede-band { padding: 12px 12px 0; }
       .suede-band-inner { gap: 14px; padding: 16px; }
       .manifest h2 { font-size: clamp(1.8rem, 1.55rem + 1vw, 2.1rem); }
@@ -1499,11 +1628,14 @@ const html = String.raw`<!doctype html>
       main { padding: 12px; }
       .control-groups { grid-template-columns: 1fr; }
       .creator-links a { flex: 1 1 120px; }
+      .wallet-create { grid-template-columns: 1fr; }
+      .wallet-create button { width: 100%; }
       button,
       input,
       select,
       .creator-links a { min-height: 44px; }
       .wallet-card-actions button { min-height: 44px; }
+      .suede-footer .footer-links a { min-height: 44px; }
       .suede-footer { padding-inline: 12px; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -1523,7 +1655,7 @@ const html = String.raw`<!doctype html>
       </div>
     </div>
     <div class="status" aria-live="polite"><span id="dot" class="dot"></span><span id="status">Loading</span></div>
-    <a class="founder-mark" href="https://suedeai.ai/founder" target="_blank" rel="noreferrer">
+    <a class="founder-mark" href="https://suedeai.ai/founder" target="_blank" rel="noopener noreferrer">
       <span>Founder &amp; builder</span>
       <strong>Jason Colapietro</strong>
     </a>
@@ -1532,7 +1664,6 @@ const html = String.raw`<!doctype html>
       <a href="#walletPanel">Manage Wallets</a>
       <a href="#fundingPanel">Move Funds</a>
       <a href="#logsPanel">Read Logs</a>
-      <a href="https://suedeai.ai" target="_blank" rel="noreferrer">Suede Labs AI</a>
     </nav>
   </header>
   <div class="suede-band">
@@ -1547,8 +1678,8 @@ const html = String.raw`<!doctype html>
         <strong>Jason Colapietro</strong>
         <span class="creator-role">Founder, Suede Labs AI</span>
         <div class="creator-links">
-          <a href="https://suedeai.ai/founder" target="_blank" rel="noreferrer">Founder profile</a>
-          <a href="https://x.com/johnnysuede" target="_blank" rel="noreferrer">@johnnysuede</a>
+          <a href="https://suedeai.ai/founder" target="_blank" rel="noopener noreferrer">Founder profile</a>
+          <a href="https://x.com/johnnysuede" target="_blank" rel="noopener noreferrer">@johnnysuede</a>
         </div>
       </aside>
       <div class="token-seal">
@@ -1574,12 +1705,13 @@ const html = String.raw`<!doctype html>
           <div class="action-dock">
             <div class="action-copy">
               <strong>Run controls</strong>
-              <span>Start uses the current values below. Stop leaves the dashboard open.</span>
+              <span>Start uses the current values below. Stop controls only a dashboard-started loop.</span>
+              <span class="runtime-note" id="runtimeHint" data-state="checking">Checking for an existing bot loop.</span>
             </div>
             <div class="button-cluster">
               <button class="primary" id="start">Start</button>
               <button class="danger" id="stop">Stop</button>
-              <button id="refresh">Refresh</button>
+              <button id="refreshAll">Refresh All</button>
             </div>
           </div>
           <div class="control-groups">
@@ -1627,23 +1759,26 @@ const html = String.raw`<!doctype html>
                 </label>
               </div>
             </div>
-            <div class="control-group">
-              <h3>Inventory Guardrails</h3>
-              <div class="control-grid">
-                <label>Target SUEDE %
-                  <input id="TARGET_TOKEN_VALUE_PCT" inputmode="decimal" />
-                </label>
-                <label>Band %
-                  <input id="INVENTORY_BAND_PCT" inputmode="decimal" />
-                </label>
-                <label>Max Impact %
-                  <input id="MAX_PRICE_IMPACT_PCT" inputmode="decimal" />
-                </label>
-              </div>
-            </div>
-            <div class="control-group">
-              <h3>Timing &amp; Addresses</h3>
-              <div class="control-grid">
+            <details class="advanced-settings">
+              <summary>Advanced settings <span>Inventory, timing, top-up, sweep, and API pacing</span></summary>
+              <div class="advanced-settings-grid">
+                <div class="control-group">
+                  <h3>Inventory Guardrails</h3>
+                  <div class="control-grid">
+                    <label>Target SUEDE %
+                      <input id="TARGET_TOKEN_VALUE_PCT" inputmode="decimal" />
+                    </label>
+                    <label>Band %
+                      <input id="INVENTORY_BAND_PCT" inputmode="decimal" />
+                    </label>
+                    <label>Max Impact %
+                      <input id="MAX_PRICE_IMPACT_PCT" inputmode="decimal" />
+                    </label>
+                  </div>
+                </div>
+                <div class="control-group">
+                  <h3>Timing &amp; Addresses</h3>
+                  <div class="control-grid">
                 <label>Delay Min Sec
                   <input id="DELAY_MIN_SEC" inputmode="decimal" />
                 </label>
@@ -1698,8 +1833,10 @@ const html = String.raw`<!doctype html>
                 <label>429 Cooldown Ms
                   <input id="API_RATE_LIMIT_COOLDOWN_MS" inputmode="numeric" />
                 </label>
+                  </div>
+                </div>
               </div>
-            </div>
+            </details>
           </div>
         </div>
       </section>
@@ -1712,11 +1849,9 @@ const html = String.raw`<!doctype html>
           <div class="action-dock">
             <div class="action-copy">
               <strong>Wallet actions</strong>
-              <span>Generate, refresh, enable, disable, and clean up addresses from one place.</span>
+              <span>Choose which funded addresses can rotate, or remove disabled entries after review.</span>
             </div>
-            <div class="button-cluster five">
-              <button id="addWallets">Generate</button>
-              <button id="refreshBalances">Refresh Balances</button>
+            <div class="button-cluster">
               <button class="primary" id="useFundedWallets">Use Funded</button>
               <button id="disableAllWallets">Disable All</button>
               <button class="warning" id="removeDisabledWallets">Remove Disabled</button>
@@ -1734,17 +1869,17 @@ const html = String.raw`<!doctype html>
           </div>
           <div class="wallet-warning" id="walletWarning"></div>
           <div class="wallet-tools">
-            <div class="grid">
+            <div class="wallet-create">
               <label>Add Wallets
                 <input id="walletCount" inputmode="numeric" value="1" />
               </label>
-              <label>Recommended SOL
-                <input id="fundingGuide" disabled />
-              </label>
+              <button id="addWallets">Generate</button>
             </div>
-            <div class="button-cluster two">
+            <label>Recommended SOL
+              <input id="fundingGuide" disabled />
+            </label>
+            <div class="button-cluster">
               <button id="enableAllWallets">Enable All</button>
-              <button id="copyFundingAddress">Copy Funding Address</button>
             </div>
           </div>
           <p class="muted">Enabled wallets receive funding and participate in address rotation. Disabled wallets stay in local <code>wallets.json</code> until removed.</p>
@@ -1757,13 +1892,12 @@ const html = String.raw`<!doctype html>
           <div class="action-dock">
             <div class="action-copy">
               <strong>Funding actions</strong>
-              <span>Check balance, preview movement, distribute, or sweep back from one toolbar.</span>
+              <span>Preview each transfer plan before moving SOL. Live actions stay visually distinct.</span>
             </div>
-            <div class="button-cluster five">
-              <button id="fundRefresh">Refresh</button>
-              <button id="copyFundingAddressAlt">Copy Address</button>
+            <div class="button-cluster four">
               <button id="fundDistributeDry">Preview Fund</button>
               <button class="primary" id="fundDistribute">Distribute</button>
+              <button id="fundSweepDry">Preview Sweep</button>
               <button class="danger" id="fundSweep">Sweep Back</button>
             </div>
           </div>
@@ -1771,7 +1905,7 @@ const html = String.raw`<!doctype html>
             <label>Funding Wallet
               <input id="fundingAddress" readonly />
             </label>
-            <button id="fundSweepDry">Preview Sweep</button>
+            <button id="copyFundingAddress">Copy Address</button>
           </div>
           <div class="grid" style="margin-top:10px">
             <label>Funding Balance
@@ -1801,7 +1935,7 @@ const html = String.raw`<!doctype html>
     </div>
     <section class="logs-panel" id="logsPanel">
       <div class="tabs">
-        <button id="logsTab">Logs</button>
+        <strong>Live logs</strong>
         <button id="clearLogs">Clear</button>
       </div>
       <pre id="logs"></pre>
@@ -1814,11 +1948,16 @@ const html = String.raw`<!doctype html>
         <strong>Suede Labs AI × Jason Colapietro</strong>
         <span>Transparent, self-hosted market infrastructure. Defaulted for $SUEDE and configurable for your own token.</span>
       </div>
-      <div class="footer-links">
-        <a href="https://suedeai.ai" target="_blank" rel="noreferrer">suedeai.ai</a>
-        <a href="https://suedeai.ai/founder" target="_blank" rel="noreferrer">Jason Colapietro</a>
-        <a href="https://t.me/AISUEDE" target="_blank" rel="noreferrer">@AISUEDE</a>
-      </div>
+      <nav class="footer-links" aria-label="Suede network">
+        <a href="https://suedeai.ai" target="_blank" rel="noopener noreferrer">Creator Ownership</a>
+        <a href="https://suedeai.org" target="_blank" rel="noopener noreferrer">Story &amp; Thesis</a>
+        <a href="https://app.suedeai.ai/create" target="_blank" rel="noopener noreferrer">Create Music &amp; Video</a>
+        <a href="https://ip.suedeai.ai" target="_blank" rel="noopener noreferrer">IP Registry</a>
+        <a href="https://agents.suedeai.ai" target="_blank" rel="noopener noreferrer">Agent Studio</a>
+        <a href="https://social.suedeai.ai" target="_blank" rel="noopener noreferrer">Suede Social</a>
+        <a href="https://seo.suedeai.ai" target="_blank" rel="noopener noreferrer">Suede SEO</a>
+        <a href="https://hub.suedeai.ai" target="_blank" rel="noopener noreferrer">All Suede Sites</a>
+      </nav>
     </div>
   </footer>
   <script>
@@ -1887,18 +2026,59 @@ const html = String.raw`<!doctype html>
     function paintStatus(status) {
       latestStatus = status;
       document.getElementById("dot").classList.toggle("on", status.running);
-      document.getElementById("status").textContent = status.running
-        ? "Running pid " + status.pid
-        : "Stopped";
-      document.getElementById("summaryStatus").textContent = status.running ? "Running" : "Stopped";
-      document.getElementById("start").textContent = status.running ? "Apply & Restart" : "Start";
+      const startButton = document.getElementById("start");
+      const stopButton = document.getElementById("stop");
+      const runtimeHint = document.getElementById("runtimeHint");
+      let statusLabel = "Stopped";
+      let summaryLabel = "Stopped";
+      let runtimeMessage = "No other bot loop detected. Start will launch one dashboard-managed process.";
+
+      if (!status.runtimeDetectionReliable) {
+        statusLabel = status.managedRunning ? "Running here · external check unavailable" : "Runtime check unavailable";
+        summaryLabel = status.managedRunning ? "Dashboard" : "Check unavailable";
+        runtimeMessage = "Safety lock: the process scan failed, so starts and wallet or funding changes are disabled.";
+      } else if (status.runtimeSource === "multiple") {
+        statusLabel = "Duplicate loops detected";
+        summaryLabel = "Duplicate";
+        runtimeMessage = "Safety alert: both dashboard and external loops are running. Stop the dashboard loop now.";
+      } else if (status.runtimeSource === "external") {
+        statusLabel = "Running externally · pid " + status.pid;
+        summaryLabel = "External tmux";
+        runtimeMessage = "Existing loop detected outside this dashboard. Start is locked; stop it in tmux or its terminal.";
+      } else if (status.runtimeSource === "dashboard") {
+        statusLabel = "Running here · pid " + status.pid;
+        summaryLabel = "Dashboard";
+        runtimeMessage = "This dashboard owns the active loop and can stop it safely.";
+      }
+
+      document.getElementById("status").textContent = statusLabel;
+      document.getElementById("summaryStatus").textContent = summaryLabel;
+      runtimeHint.textContent = runtimeMessage;
+      runtimeHint.dataset.state = status.runtimeDetectionReliable ? status.runtimeSource : "unknown";
+      startButton.textContent = "Start";
+      startButton.disabled = status.running || !status.runtimeDetectionReliable;
+      stopButton.textContent = status.externalRunning && !status.managedRunning ? "Stop in tmux" : "Stop";
+      stopButton.disabled = !status.managedRunning;
+
+      const idleOnlyActions = [
+        "addWallets", "useFundedWallets", "disableAllWallets", "removeDisabledWallets",
+        "enableAllWallets", "fundDistributeDry", "fundDistribute", "fundSweepDry", "fundSweep"
+      ];
+      for (const id of idleOnlyActions) {
+        const action = document.getElementById(id);
+        if (action) action.disabled = status.running || !status.runtimeDetectionReliable;
+      }
       document.getElementById("summaryMode").textContent = status.config.MODE || "-";
       const activeMakerCount = Number(status.config.ACTIVE_MAKER_COUNT || 0);
       const cooldownSec = Number(status.config.WALLET_COOLDOWN_SEC || 0);
       document.getElementById("summaryRotation").textContent =
         (activeMakerCount > 0 ? activeMakerCount + " active" : "all enabled") +
         " / " + cooldownSec + "s";
-      document.getElementById("walletPanelHint").textContent = status.running ? "Stop bot to edit" : "Ready to edit";
+      document.getElementById("walletPanelHint").textContent = !status.runtimeDetectionReliable
+        ? "Safety locked"
+        : status.running
+          ? "Stop bot to edit"
+          : "Ready to edit";
       for (const key of keys) {
         const el = document.getElementById(key);
         if (el && status.config[key] !== undefined && !dirtyKeys.has(key)) el.value = status.config[key];
@@ -1930,6 +2110,7 @@ const html = String.raw`<!doctype html>
         ? status.wallets.map((w) => {
             const enabled = w.enabled !== false;
             const publicKey = escapeHtml(w.publicKey);
+            const idleDisabled = status.running || !status.runtimeDetectionReliable ? " disabled" : "";
             return '<div class="row wallet-row ' + (enabled ? '' : 'wallet-disabled') + '">' +
               '<span class="wallet-index">#' + w.index + '</span>' +
               '<code class="wallet-key" title="' + publicKey + '">' + shortKey(w.publicKey) + '</code>' +
@@ -1937,7 +2118,7 @@ const html = String.raw`<!doctype html>
               '<span class="pill ' + (enabled ? 'on' : 'off') + '">' + (enabled ? 'enabled' : 'disabled') + '</span>' +
               '<div class="wallet-card-actions">' +
                 '<button class="button-quiet" data-wallet-copy="' + publicKey + '">Copy</button>' +
-                '<button data-wallet-toggle="' + w.index + '" data-enabled="' + (!enabled) + '">' + (enabled ? 'Disable' : 'Enable') + '</button>' +
+                '<button data-wallet-toggle="' + w.index + '" data-enabled="' + (!enabled) + '"' + idleDisabled + '>' + (enabled ? 'Disable' : 'Enable') + '</button>' +
               '</div>' +
             '</div>';
           }).join("")
@@ -2093,11 +2274,8 @@ const html = String.raw`<!doctype html>
         append("[dashboard] " + err.message);
       }
     };
-    document.getElementById("refresh").onclick = load;
-    document.getElementById("refreshBalances").onclick = loadWalletBalances;
-    document.getElementById("fundRefresh").onclick = loadFunding;
+    document.getElementById("refreshAll").onclick = load;
     document.getElementById("copyFundingAddress").onclick = copyFundingAddress;
-    document.getElementById("copyFundingAddressAlt").onclick = copyFundingAddress;
     document.getElementById("clearLogs").onclick = () => { logs.textContent = ""; };
     document.getElementById("addWallets").onclick = async () => {
       try {
@@ -2158,8 +2336,11 @@ const html = String.raw`<!doctype html>
       try {
         const status = await api("/api/status");
         if (status.running) {
-          append("[wallets] stopping bot before changing enabled wallets");
-          await api("/api/stop", { method: "POST" });
+          throw new Error(
+            status.externalRunning
+              ? "Stop the existing tmux or terminal bot before changing enabled wallets"
+              : "Stop the dashboard bot before changing enabled wallets"
+          );
         }
         const result = await api("/api/wallets/enable-funded", { method: "POST" });
         append("[wallets] enabled " + result.enabled + " funded wallet(s), disabled " + result.disabled + " empty wallet(s)");
@@ -2241,8 +2422,21 @@ const server = http.createServer(async (req, res) => {
 
   try {
     if (req.method === "GET" && url.pathname === "/") {
-      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      res.writeHead(200, {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "no-store",
+        "x-robots-tag": "noindex, nofollow, noarchive",
+      });
       res.end(html);
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/robots.txt") {
+      res.writeHead(200, {
+        "content-type": "text/plain; charset=utf-8",
+        "cache-control": "no-store",
+      });
+      res.end("User-agent: *\nDisallow: /\n");
       return;
     }
 
@@ -2359,6 +2553,25 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === "POST" && url.pathname === "/api/start") {
+      const runtime = statusPayload();
+      if (!runtime.runtimeDetectionReliable) {
+        json(
+          res,
+          { error: "Unable to verify that another market maker loop is not already running" },
+          503
+        );
+        return;
+      }
+      if (runtime.externalRunning) {
+        json(
+          res,
+          {
+            error: `A market maker loop is already running outside the dashboard (PID ${runtime.externalPid}). Stop it in tmux or its terminal before starting another.`,
+          },
+          409
+        );
+        return;
+      }
       const body = await readBody(req);
       if (bot && !botExited) {
         stopBot();

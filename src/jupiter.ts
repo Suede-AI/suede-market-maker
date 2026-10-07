@@ -34,6 +34,15 @@ export interface SwapResult {
   feeSol: number | null;
 }
 
+class JupiterNoRouteError extends Error {}
+
+function isNoRouteError(err: unknown): boolean {
+  if (!axios.isAxiosError(err) || err.response?.status !== 400) return false;
+  const data = err.response.data;
+  return typeof data === "object" && data !== null &&
+    (data as { errorCode?: unknown }).errorCode === "NO_ROUTES_FOUND";
+}
+
 function retryDelayMs(attempt: number): number {
   return config.apiRetryBaseDelayMs * 2 ** attempt;
 }
@@ -76,6 +85,9 @@ async function withApiRetry<T>(label: string, fn: () => Promise<T>): Promise<T> 
       return await fn();
     } catch (err) {
       lastErr = err;
+      if (label === "quote" && isNoRouteError(err)) {
+        throw new JupiterNoRouteError("No Jupiter route is available for this amount");
+      }
       const status = errorStatus(err);
       const retryable = status === 429 || status === undefined || status >= 500;
       if (!retryable || attempt >= config.apiRetryAttempts - 1) break;
@@ -110,19 +122,24 @@ export async function getQuote(
   inputMint: string,
   outputMint: string,
   amountLamports: number
-): Promise<QuoteResponse> {
-  const { data } = await withApiRetry("quote", () =>
-    axios.get(JUP_QUOTE, {
-      params: {
-        inputMint,
-        outputMint,
-        amount: amountLamports,
-        slippageBps: config.slippageBps,
-      },
-      timeout: 10_000,
-    })
-  );
-  return data as QuoteResponse;
+): Promise<QuoteResponse | null> {
+  try {
+    const { data } = await withApiRetry("quote", () =>
+      axios.get(JUP_QUOTE, {
+        params: {
+          inputMint,
+          outputMint,
+          amount: amountLamports,
+          slippageBps: config.slippageBps,
+        },
+        timeout: 10_000,
+      })
+    );
+    return data as QuoteResponse;
+  } catch (err) {
+    if (err instanceof JupiterNoRouteError) return null;
+    throw err;
+  }
 }
 
 /** Build, sign, and send a Jupiter swap transaction. Returns the tx signature. */

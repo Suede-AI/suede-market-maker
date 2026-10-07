@@ -20,7 +20,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "test": "tsc --noEmit && ts-node src/fundingMath.test.ts && ts-node src/telegramCommands.test.ts && ts-node src/rotation.test.ts",
+    "test": "tsc --noEmit && ts-node src/fundingMath.test.ts && ts-node src/telegramCommands.test.ts && ts-node src/telegramRuntime.test.ts && ts-node src/rotation.test.ts && ts-node src/jupiter.test.ts && ts-node src/runtimeGuard.test.ts",
     "app": "node scripts/open-dashboard.js",
     "website": "node scripts/open-dashboard.js",
     "dashboard:open": "node scripts/open-dashboard.js",

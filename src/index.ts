@@ -125,6 +125,10 @@ async function estimateTokenValueSol(
   if (rawAmount <= 0) return 0;
 
   const quote = await getQuote(config.tokenMint, SOL_MINT, rawAmount);
+  if (!quote) {
+    log.decision("SKIP", wallet.wallet.publicKey.toString(), 0, "token inventory has no Jupiter route");
+    return 0;
+  }
   const impactPct = parsePriceImpactPct(quote);
   if (impactPct > config.maxPriceImpactPct) {
     log.warn(
@@ -345,6 +349,10 @@ async function maybeBuy(
 
   const tradeLamports = Math.floor(tradeSol * LAMPORTS_PER_SOL);
   const quote = await getQuote(SOL_MINT, config.tokenMint, tradeLamports);
+  if (!quote) {
+    log.decision("SKIP", walletStr, state.tokenValuePct, "no Jupiter route for BUY amount");
+    return null;
+  }
   assertQuoteSafe(quote, "BUY");
   const tokenReceived = quoteOutToken(quote);
 
@@ -405,6 +413,10 @@ async function maybeSell(
       SOL_MINT,
       tokenRawAmount(state.tokenBalance)
     );
+    if (!fullInventoryQuote) {
+      log.decision("SKIP", walletStr, state.tokenValuePct, "token inventory has no Jupiter route");
+      return null;
+    }
     const fullInventorySol = quoteOutSol(fullInventoryQuote);
     tokenToSell = fullInventorySol > desiredSol
       ? Math.min(state.tokenBalance, state.tokenBalance * (desiredSol / fullInventorySol))
@@ -418,6 +430,10 @@ async function maybeSell(
   }
 
   const quote = await getQuote(config.tokenMint, SOL_MINT, rawAmount);
+  if (!quote) {
+    log.decision("SKIP", walletStr, state.tokenValuePct, "no Jupiter route for SELL amount");
+    return null;
+  }
   assertQuoteSafe(quote, "SELL");
   const solReceived = quoteOutSol(quote);
   if (desiredSolOverride !== undefined && solReceived < config.tradeAmountSolMin) {
